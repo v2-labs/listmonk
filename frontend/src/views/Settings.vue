@@ -431,6 +431,162 @@
             </b-button>
           </b-tab-item><!-- mail servers -->
 
+          <b-tab-item :label="$t('settings.bounce.name')">
+            <div class="columns mb-6">
+              <div class="column">
+                <b-field :label="$t('settings.bounce.enable')">
+                  <b-switch v-model="form['bounce.enabled']" name="bounce.enabled" />
+                </b-field>
+              </div>
+              <div class="column">
+                <b-field :label="$t('settings.bounce.count')" label-position="on-border"
+                  :message="$t('settings.bounce.countHelp')">
+                  <b-numberinput v-model="form['bounce.count']"
+                    name="bounce.count" type="is-light"
+                    controls-position="compact" placeholder="3" min="1" max="1000" />
+                </b-field>
+              </div>
+              <div class="column">
+                <b-field :label="$t('settings.bounce.action')" label-position="on-border">
+                  <b-select name="bounce.action" v-model="form['bounce.action']">
+                    <option value="blocklist">{{ $t('settings.bounce.blocklist') }}</option>
+                    <option value="delete">{{ $t('settings.bounce.delete') }}</option>
+                  </b-select>
+                </b-field>
+              </div>
+            </div><!-- columns -->
+
+            <b-field :label="$t('settings.bounce.enableWebhooks')">
+              <b-switch v-model="form['bounce.enable_webhooks']" :disabled="!form['bounce.enabled']"
+                name="enabled" :native-value="true" data-cy="btn-enable-bounce-mailbox" />
+              <p class="has-text-grey">
+                <a href="" target="_blank">{{ $t('globals.buttons.learnMore') }} &rarr;</a>
+              </p>
+            </b-field>
+
+            <!-- bounce mailbox -->
+            <b-field :label="$t('settings.bounce.enableMailbox')">
+              <b-switch v-model="form['bounce.boxes'][0].enabled"
+                :disabled="!form['bounce.enabled']"
+                name="enabled" :native-value="true" data-cy="btn-enable-bounce-mailbox" />
+            </b-field>
+
+            <template v-if="form['bounce.enabled'] && form['bounce.boxes'][0].enabled">
+              <div class="block box" v-for="(item, n) in form['bounce.boxes']" :key="n">
+                <div class="columns">
+                  <div class="column" :class="{'disabled': !item.enabled}">
+                    <div class="columns">
+                      <div class="column is-3">
+                        <b-field :label="$t('settings.bounce.type')" label-position="on-border">
+                          <b-select v-model="item.type" name="type">
+                              <option value="pop">POP</option>
+                              <option value="imap">IMAP</option>
+                          </b-select>
+                        </b-field>
+                      </div>
+                      <div class="column is-6">
+                        <b-field :label="$t('settings.bounce.host')" label-position="on-border"
+                          :message="$t('settings.bounce.hostHelp')">
+                          <b-input v-model="item.host" name="host"
+                            placeholder='bounce.yourmailserver.net' :maxlength="200" />
+                        </b-field>
+                      </div>
+                      <div class="column is-3">
+                        <b-field :label="$t('settings.bounce.port')" label-position="on-border"
+                          :message="$t('settings.bounce.portHelp')">
+                          <b-numberinput v-model="item.port" name="port" type="is-light"
+                              controls-position="compact"
+                              placeholder="25" min="1" max="65535" />
+                        </b-field>
+                      </div>
+                    </div><!-- host -->
+
+                    <div class="columns">
+                      <div class="column is-3">
+                        <b-field :label="$t('settings.bounce.authProtocol')"
+                          label-position="on-border">
+                          <b-select v-model="item.auth_protocol" name="auth_protocol">
+                            <option value="none">none</option>
+                            <option v-if="item.type === 'pop'" value="userpass">userpass</option>
+                            <template v-else>
+                              <option value="cram">cram</option>
+                              <option value="plain">plain</option>
+                              <option value="login">login</option>
+                            </template>
+                          </b-select>
+                        </b-field>
+                      </div>
+                      <div class="column">
+                        <b-field grouped>
+                          <b-field :label="$t('settings.bounce.username')"
+                            label-position="on-border" expanded>
+                            <b-input v-model="item.username"
+                              :disabled="item.auth_protocol === 'none'"
+                              name="username" placeholder="mysmtp" :maxlength="200" />
+                          </b-field>
+                          <b-field :label="$t('settings.bounce.password')"
+                            label-position="on-border" expanded
+                            :message="$t('settings.bounce.passwordHelp')">
+                            <b-input v-model="item.password"
+                              :disabled="item.auth_protocol === 'none'"
+                              name="password" type="password"
+                              :placeholder="$t('settings.bounce.passwordHelp')"
+                              :maxlength="200" />
+                          </b-field>
+                        </b-field>
+                      </div>
+                    </div><!-- auth -->
+                    <hr />
+
+                    <div class="columns">
+                      <div class="column is-8">
+                        <b-field grouped>
+                          <b-field :label="$t('settings.bounce.tls')" expanded
+                            :message="$t('settings.bounce.tlsHelp')">
+                            <b-switch v-model="item.tls_enabled" name="item.tls_enabled" />
+                          </b-field>
+                          <b-field :label="$t('settings.bounce.skipTLS')" expanded
+                            :message="$t('settings.bounce.skipTLSHelp')">
+                            <b-switch v-model="item.tls_skip_verify"
+                              :disabled="!item.tls_enabled" name="item.tls_skip_verify" />
+                          </b-field>
+                        </b-field>
+                      </div>
+                    </div><!-- TLS -->
+                    <hr />
+
+                    <div class="columns">
+                      <div class="column is-4">
+                        <b-field :label="$t('settings.bounce.maxConns')" label-position="on-border"
+                          :message="$t('settings.bounce.maxConnsHelp')">
+                          <b-numberinput v-model="item.max_conns" name="max_conns" type="is-light"
+                              controls-position="compact"
+                              placeholder="25" min="1" max="65535" />
+                        </b-field>
+                      </div>
+                      <div class="column is-4">
+                        <b-field :label="$t('settings.bounce.idleTimeout')"
+                          label-position="on-border"
+                          :message="$t('settings.bounce.idleTimeoutHelp')">
+                          <b-input v-model="item.idle_timeout" name="idle_timeout"
+                            placeholder="15s" :pattern="regDuration" :maxlength="10" />
+                        </b-field>
+                      </div>
+                      <div class="column is-4">
+                        <b-field :label="$t('settings.bounce.waitTimeout')"
+                          label-position="on-border"
+                          :message="$t('settings.bounce.waitTimeoutHelp')">
+                          <b-input v-model="item.wait_timeout" name="wait_timeout"
+                            placeholder="5s" :pattern="regDuration" :maxlength="10" />
+                        </b-field>
+                      </div>
+                    </div>
+                  </div>
+                </div><!-- second container column -->
+              </div><!-- block -->
+            </template>
+          </b-tab-item><!-- bounces -->
+
           <b-tab-item :label="$t('settings.messengers.name')">
             <div class="items messengers">
               <div class="block box" v-for="(item, n) in form.messengers" :key="n">
@@ -581,6 +737,10 @@ export default Vue.extend({
       this.form.smtp.splice(i, 1);
     },
 
+    removeBounceBox(i) {
+      this.form['bounce.boxes'].splice(i, 1);
+    },
+
     showSMTPHeaders(i) {
       const s = this.form.smtp[i];
       s.showHeaders = true;
@@ -613,7 +773,7 @@ export default Vue.extend({
     onSubmit() {
       const form = JSON.parse(JSON.stringify(this.form));
 
-      // De-serialize custom e-mail headers.
+      // SMTP boxes.
       for (let i = 0; i < form.smtp.length; i += 1) {
         // If it's the dummy UI password placeholder, ignore it.
         if (form.smtp[i].password === dummyPassword) {
@@ -624,6 +784,14 @@ export default Vue.extend({
           form.smtp[i].email_headers = JSON.parse(form.smtp[i].strEmailHeaders);
         } else {
           form.smtp[i].email_headers = [];
+        }
+      }
+
+      // Bounces boxes.
+      for (let i = 0; i < form['bounce.boxes'].length; i += 1) {
+        // If it's the dummy UI password placeholder, ignore it.
+        if (form['bounce.boxes'][i].password === dummyPassword) {
+          form['bounce.boxes'][i].password = '';
         }
       }
 
@@ -676,6 +844,12 @@ export default Vue.extend({
           // The backend doesn't send passwords, so add a dummy so that
           // the password looks filled on the UI.
           d.smtp[i].password = dummyPassword;
+        }
+
+        for (let i = 0; i < d['bounce.boxes'].length; i += 1) {
+          // The backend doesn't send passwords, so add a dummy so that
+          // the password looks filled on the UI.
+          d['bounce.boxes'][i].password = dummyPassword;
         }
 
         for (let i = 0; i < d.messengers.length; i += 1) {

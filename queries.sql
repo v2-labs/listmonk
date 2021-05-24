@@ -773,3 +773,35 @@ SELECT JSON_OBJECT_AGG(key, value) AS settings
 UPDATE settings AS s SET value = c.value
     -- For each key in the incoming JSON map, update the row with the key and its value.
     FROM(SELECT * FROM JSONB_EACH($1)) AS c(key, value) WHERE s.key = c.key;
+
+-- name: record-bounce
+-- Insert a bounce and count the bounces for the subscriber and either unsubscribe them,
+WITH sub AS (
+    SELECT id, status FROM subscribers WHERE CASE WHEN $1 != '' THEN uuid = $1::UUID ELSE email = $2 END
+),
+camp AS (
+    SELECT id FROM campaigns WHERE uuid::UUID = $3
+),
+bounce AS (
+    -- Record the bounce if it the subscriber is not already blocklisted;
+    INSERT INTO bounces (subscriber_id, campaign_id, type, source, meta, created_at)
+    SELECT (SELECT id FROM sub), (SELECT id FROM camp), $4, $5, $6, $7
+    WHERE NOT EXISTS (SELECT 1 WHERE (SELECT status FROM sub) = 'blocklisted')
+),
+num AS (
+    SELECT COUNT(*) AS num FROM bounces WHERE subscriber_id = (SELECT id FROM sub)
+),
+
+-- block1 and block2 will run when $8 = 'blocklist' and the number of bouunces exceed $8.
+block1 AS (
+    UPDATE subscribers SET status='blocklisted'
+    WHERE $9 = 'blocklist' AND (SELECT num FROM num) >= $8 AND id = (SELECT id FROM sub) AND (SELECT status FROM sub) != 'blocklisted'
+),
+block2 AS (
+    UPDATE subscriber_lists SET status='unsubscribed'
+    WHERE $9 = 'blocklist' AND (SELECT num FROM num) >= $8 AND subscriber_id = (SELECT id FROM sub) AND (SELECT status FROM sub) != 'blocklisted'
+)
+
+-- This delete  will only run when $9 = 'delete' and the number of bouunces exceed $8.
+DELETE FROM subscribers
+    WHERE $9 = 'delete' AND (SELECT num FROM num) >= $8 AND id = (SELECT id FROM sub);

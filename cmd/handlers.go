@@ -118,6 +118,12 @@ func registerHTTPHandlers(e *echo.Echo, app *App) {
 	g.PUT("/api/templates/:id/default", handleTemplateSetDefault)
 	g.DELETE("/api/templates/:id", handleDeleteTemplate)
 
+	// Public bounce endpoints.
+	if app.constants.EnableBounceWebhooks {
+		g.POST("/webhooks/bounce", handleBounceWebhook)
+		g.POST("/webhooks/bounce/:service", handleBounceWebhook)
+	}
+
 	// Static admin views.
 	g.GET("/lists", handleIndexPage)
 	g.GET("/lists/forms", handleIndexPage)

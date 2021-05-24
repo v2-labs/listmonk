@@ -92,7 +92,9 @@ section {
 }
 
 .box {
-  box-shadow: 0 0 2px $grey-lighter;
+  background: $white-bis;
+  box-shadow: 2px 2px 5px $white-ter;
+  border: 1px solid $grey-lightest;
 }
 
 /* Two column sidebar+body layout */
@@ -320,7 +322,7 @@ section {
 
 /* Tabs */
 .b-tabs .tab-content {
-  padding-top: 2rem;
+  padding-top: 3rem;
 }
 
 /* Tags */

@@ -434,3 +434,15 @@ func (s Subscriber) LastName() string {
 
 	return s.Name
 }
+
+// Bounce represents a single bounce record.
+type Bounce struct {
+	// One of these should be specified.
+	Email          string
+	SubscriberUUID string
+	CampaignUUID   string
+
+	Type   string
+	Source string
+	Meta   string
+}
